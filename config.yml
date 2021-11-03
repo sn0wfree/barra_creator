@@ -10,11 +10,7 @@ Token:
 
 LogFile: test.log # 日志文件参数，使用双日志输出
 
-DATABASES: # 连接器参数
-  GP: postgresql+psycopg2://linl:8Ttpj6m5@10.50.52.20:5432/gpdw
-  DW: oracle+cx_oracle://username:password@172.24.127.200:1521/gjdw
-  Wind_offline: oracle+cx_oracle://team_jg:teamGJ20210621@gjdw
-  StoreDB: oracle+cx_oracle://username:password@172.24.127.200:1521/gjdw
+
 
 
 
