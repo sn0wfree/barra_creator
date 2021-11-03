@@ -1,0 +1,107 @@
+API:
+  api_host: 0.0.0.0
+  api_port: 5972
+  title: Barra Analysis Model API Service
+
+Token:
+  - SUPERUSER
+  - TEST
+  - DEV
+
+LogFile: test.log # 日志文件参数，使用双日志输出
+
+DATABASES: # 连接器参数
+  GP: postgresql+psycopg2://linl:8Ttpj6m5@10.50.52.20:5432/gpdw
+  DW: oracle+cx_oracle://username:password@172.24.127.200:1521/gjdw
+  Wind_offline: oracle+cx_oracle://team_jg:teamGJ20210621@gjdw
+  StoreDB: oracle+cx_oracle://username:password@172.24.127.200:1521/gjdw
+
+
+
+load_style_factor:
+  check: select factor_name,max(trade_dt) as max_trade_dt,min(trade_dt) as min_trade_dt from ods_idcinfo.stock_factor_value_d where factor_name in {factor_name_list} group by factor_name
+  select: select s_info_windcode as stk_id,trade_dt,value from ods_idcinfo.stock_factor_value_d where factor_name = '{factor_name}' and trade_dt > {dt_from} and trade_dt <= {dt_end}
+  tasks: { 'barra_大类_流动性因子': 'Liquidity',
+           'barra_大类_质量因子': 'Value',
+           'barra_大类_市值因子': 'Size',
+           'barra_大类_beta因子': 'Beta',
+           'barra_大类_杠杆因子': 'Leverage',
+           'barra_大类_动量因子': 'Momentum',
+           'barra_大类_非线性市值因子': 'NLSize',
+           'barra_大类_估值因子': 'EarningsYield',
+           'barra_大类_波动率因子': 'Resvol',
+           'barra_大类_成长因子': 'Growth' }
+  source: DW
+
+load_AShareCalendar_sql:
+  select: select * from eterminal.AShareCalendar
+  source: Wind
+
+load_stklist:
+  select: select s_info_windcode as stk_id, s_info_name as stk_name, to_number(s_info_listdate) as list_date, to_number(s_info_delistdate) as delist_date
+    from eterminal.AShareDescription
+    order by s_info_windcode
+  source: Wind
+
+load_stock_CITICS_ind_class:
+  source: Wind
+  select: select a.s_info_windcode as stk_id, a.CITICS_IND_CODE as citics_ind_code, b.Industriesname as citics_ind_name, to_number(ENTRY_DT) as entry_dt, to_number(REMOVE_DT) as remove_dt
+    from eterminal.AShareIndustriesClassCITICS a, eterminal.AShareIndustriesCode  b
+    where substr(a.citics_ind_code, 1, 4) = substr(b.IndustriesCode, 1, 4)
+    and b.levelnum = '2'
+  # ['stk_id', 'citics_ind_code', 'citics_ind_name', 'entry_dt', 'remove_dt']
+
+load_stock_CITICS_ind_class_ii:
+  source: Wind
+  select: select a.s_info_windcode as stk_id, a.CITICS_IND_CODE as citics_ind_code, b.Industriesname as citics_ind_name, to_number(ENTRY_DT) as entry_dt, to_number(REMOVE_DT) as remove_dt
+    from eterminal.AShareIndustriesClassCITICS a, eterminal.AShareIndustriesCode  b
+    where substr(a.citics_ind_code, 1, 6) = substr(b.IndustriesCode, 1, 6)
+    and b.levelnum = '3'
+
+load_citics_ind_class_code:
+  source: Wind
+  select_I: select INDUSTRIESCODE as citics_ind_code, INDUSTRIESNAME as citics_ind_name
+    from eterminal.AShareIndustriesCode
+    where substr(INDUSTRIESCODE, 1, 2) = 'b1'
+    and LEVELNUM='2' and substr(INDUSTRIESCODE, 1, 4) <> 'b10m'
+
+
+  select_II: select INDUSTRIESCODE as citics_ind_code, INDUSTRIESNAME as citics_ind_name
+    from eterminal.AShareIndustriesCode
+    where substr(INDUSTRIESCODE, 1, 4) = 'b10m' and LEVELNUM='3'
+
+load_if_st_mat:
+  select: select S_INFO_WINDCODE as s_info_windcode, to_number(ENTRY_DT) as entry_dt, to_number(REMOVE_DT) as remove_dt, to_number(ANN_DT) as ann_dt, S_TYPE_ST as st_type
+    from eterminal.AShareST where  S_TYPE_ST='S'
+  source: Wind
+
+load_stk_suspend:
+  select: select s_info_windcode, to_number(trade_dt) as trade_dt, s_dq_tradestatus as suspend
+    from eterminal.AShareEODPrices
+    where trade_dt > {dt_from}
+  source: Wind
+
+load_a_index_members:
+  select: select s_info_windcode as index_id, s_con_windcode as stk_id, to_number(s_con_indate) as entry_dt, to_number(s_con_outdate) as remove_dt
+    from eterminal.aindexmembers
+  source: Wind
+
+
+load_float_mv:
+  select: select s_info_windcode as stk_id, to_number(trade_dt) as trade_dt, s_dq_mv as float_mv
+    from eterminal.AShareEODDerivativeIndicator
+    where trade_dt <= {dt_end} and trade_dt > {dt_from}
+  source: Wind
+
+load_close_price:
+  select: select s_info_windcode as stk_id, to_number(trade_dt) as trade_dt, s_dq_close as close
+    from eterminal.AShareEODPrices
+    where trade_dt <= {dt_end} and trade_dt > {dt_from}
+  source: Wind
+
+load_a_index_free_weight_range:
+  select: select to_number(trade_dt) as trade_dt, s_con_windcode as stk_id, i_weight as stk_weight
+    from eterminal.AIndexHS300FreeWeight
+    where trade_dt <= {dt_end} and trade_dt > {dt_from}
+    and s_info_windcode='{index_code}'
+  source: Wind
