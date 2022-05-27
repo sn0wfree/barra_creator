@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/barra_creator.iml" filepath="$PROJECT_DIR$/.idea/barra_creator.iml" />
+      <module fileurl="file://F:/data2text/.idea/data2text.iml" filepath="F:/data2text/.idea/data2text.iml" />
     </modules>
   </component>
 </project>

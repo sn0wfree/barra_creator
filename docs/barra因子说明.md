@@ -263,3 +263,5 @@
 | 17   | AlndexCSIAllINDWeight        | 中证全指指数权重          | Wind数据库 |
 | 18   | AIndexWindlndustriesEOD      | 中国A股Wind行业指数日行情 | Wind数据库 |
 
+## 数据清单
+1.  流通市值

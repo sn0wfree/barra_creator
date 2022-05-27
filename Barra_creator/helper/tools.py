@@ -1,9 +1,23 @@
 # coding=utf-8
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
-def normmat(data: pd.DataFrame, trade_dt: pd.DataFrame, stklist: pd.DataFrame, index_name: str = 'trade_dt', column_name: str = 'stk_id', value_name: str = 'close'):
+def decay_weight(decay_n=63, L=252):
+    """
+
+    :param decay_n:
+    :param L:
+    :return:
+    """
+    weight_out = 0.5 ** (np.arange(L - 1, -1, -1) / decay_n)
+    weight_one_out = weight_out / weight_out.sum()
+    weight_all = {'weight_out': weight_out, 'weight_one_out': weight_one_out}
+    return weight_all
+
+
+def normmat(data: pd.DataFrame, trade_dt: pd.DataFrame, stklist: pd.DataFrame, index_name: str = 'trade_dt',
+            column_name: str = 'stk_id', value_name: str = 'close'):
     """
     转换成标准矩阵格式
     :param data:
@@ -19,7 +33,7 @@ def normmat(data: pd.DataFrame, trade_dt: pd.DataFrame, stklist: pd.DataFrame, i
     return df
 
 
-def mad(values: np.ndarray, n:int=5, axis:int=1):
+def mad(values: np.ndarray, n: int = 5, axis: int = 1):
     """
     中位数去极值
     :param values:
@@ -62,7 +76,7 @@ def _preprocess(float_mv, factor_i_mat, ind_mat_list):
         factor_i_ind['data_ind_mean'])
     # 因子值和行业编号都为nan的剔除
     factor_i_ind = factor_i_ind[~(
-        factor_i_ind['data'].isnull() & factor_i_ind['ind_code_order'].isnull())]
+            factor_i_ind['data'].isnull() & factor_i_ind['ind_code_order'].isnull())]
     # 3. 标准化
     mv = float_mv
     factor_i_ind = pd.merge(factor_i_ind, mv, left_on=['trade_dt', 'stk_id'],
@@ -72,7 +86,7 @@ def _preprocess(float_mv, factor_i_mat, ind_mat_list):
     factor_i_ind['mv_weight'] = factor_i_ind.groupby(
         'trade_dt')['float_mv'].transform(lambda x: x / x.sum())
     factor_i_ind['data_filled_weighted'] = factor_i_ind['data_filled'] * \
-        factor_i_ind['mv_weight']
+                                           factor_i_ind['mv_weight']
     factor_i_ind['data_weighted_mean'] = factor_i_ind.groupby('trade_dt')['data_filled_weighted'].transform(
         np.nansum)
     factor_i_ind['data_std'] = factor_i_ind.groupby('trade_dt')['data_filled'].transform(

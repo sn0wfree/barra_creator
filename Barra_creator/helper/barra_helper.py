@@ -14,5 +14,8 @@
 #         config.read(config_path)
 #         barra_path = config.get('Barra', 'path')
 #         return barra_path
+
+
+
 if __name__ == '__main__':
     import sys
